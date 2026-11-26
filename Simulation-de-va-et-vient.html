@@ -1,244 +1,331 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulation Éclairage Va-et-Vient</title>
-    <style>
-        :root {
-            --bg-color: #1a1e29;
-            --panel-color: #262c3d;
-            --accent-off: #4a5568;
-            --accent-on: #38a169;
-            --lamp-off: #333948;
-            --lamp-on: #ffeaa7;
-            --lamp-glow: #fdcb6e;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulation Éclairage Va-et-Vient (XOR)</title>
+  <style>
+    :root {
+      --bg-color: #12141d;
+      --card-bg: #1c2030;
+      --switch-off: #374151;
+      --switch-on: #3b82f6;
+      --bulb-off: #4b5563;
+      --bulb-on: #fde047;
+      --glow-color: rgba(253, 224, 71, 0.45);
+      --wire-off: #475569;
+      --wire-on: #f59e0b;
+      --text-color: #e2e8f0;
+      --accent: #38bdf8;
+    }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
 
-        body {
-            background-color: var(--bg-color);
-            color: #fff;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
 
-        h1 {
-            margin-bottom: 10px;
-            text-align: center;
-            font-size: 1.8rem;
-        }
+    /* Boîte principale */
+    .circuit-box {
+      background: var(--card-bg);
+      border: 1px solid #2d3748;
+      border-radius: 20px;
+      padding: 40px;
+      width: 100%;
+      max-width: 680px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
 
-        p.subtitle {
-            color: #a0aec0;
-            margin-bottom: 40px;
-            text-align: center;
-        }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      text-align: center;
+    }
 
-        /* Masquage des cases à cocher réelles */
-        .switch-input {
-            position: absolute;
-            opacity: 0;
-            pointer-events: none;
-        }
+    p.subtitle {
+      color: #94a3b8;
+      font-size: 0.9rem;
+      margin-bottom: 35px;
+      text-align: center;
+    }
 
-        /* Conteneur principal du circuit */
-        .circuit {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 40px;
-            background-color: var(--panel-color);
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            flex-wrap: wrap;
-        }
+    /* Inputs cachés (la logique repose dessus) */
+    input[type="checkbox"] {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
 
-        /* Style des interrupteurs */
-        .switch-box {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-            cursor: pointer;
-            user-select: none;
-        }
+    /* Section Ampoule */
+    .bulb-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 40px;
+      position: relative;
+    }
 
-        .switch-title {
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
+    /* Douille */
+    .socket {
+      width: 32px;
+      height: 18px;
+      background: linear-gradient(to right, #64748b, #94a3b8, #64748b);
+      border-radius: 4px 4px 0 0;
+      position: relative;
+      z-index: 2;
+    }
 
-        .switch-lever {
-            width: 70px;
-            height: 120px;
-            background: #1e222d;
-            border-radius: 12px;
-            position: relative;
-            box-shadow: inset 0 2px 8px rgba(0,0,0,0.6);
-            border: 2px solid #3b4253;
-        }
+    /* Ampoule */
+    .bulb {
+      width: 76px;
+      height: 94px;
+      background-color: var(--bulb-off);
+      border-radius: 50% 50% 40% 40% / 60% 60% 35% 35%;
+      margin-top: -6px;
+      position: relative;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
 
-        .switch-lever::after {
-            content: '';
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            width: 50px;
-            height: 50px;
-            background: var(--accent-off);
-            border-radius: 8px;
-            transition: all 0.25s ease;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
+    /* Filament */
+    .filament {
+      width: 24px;
+      height: 28px;
+      border: 2px solid #6b7280;
+      border-bottom: none;
+      border-radius: 12px 12px 0 0;
+      transition: all 0.3s ease;
+    }
 
-        /* État visuel de l'interrupteur A activé */
-        #switchA:checked ~ .circuit label[for="switchA"] .switch-lever::after {
-            top: 60px;
-            background: var(--accent-on);
-        }
+    /* Badge d'état de l'ampoule */
+    .bulb-status {
+      margin-top: 15px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 20px;
+      background: #283046;
+      color: #94a3b8;
+      transition: all 0.3s ease;
+    }
 
-        /* État visuel de l'interrupteur B activé */
-        #switchB:checked ~ .circuit label[for="switchB"] .switch-lever::after {
-            top: 60px;
-            background: var(--accent-on);
-        }
+    /* Conteneur des Interrupteurs */
+    .switches-container {
+      display: flex;
+      justify-content: space-around;
+      width: 100%;
+      margin-bottom: 30px;
+      gap: 20px;
+    }
 
-        /* Style de l'ampoule */
-        .lamp-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-        }
+    .switch-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
 
-        .lamp {
-            width: 90px;
-            height: 90px;
-            border-radius: 50%;
-            background-color: var(--lamp-off);
-            position: relative;
-            transition: all 0.3s ease;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
-            border: 2px solid #485460;
-        }
+    .switch-label-text {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #cbd5e1;
+    }
 
-        .lamp::before {
-            content: '';
-            position: absolute;
-            bottom: -15px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 35px;
-            height: 15px;
-            background: #718096;
-            border-radius: 0 0 6px 6px;
-        }
+    /* Bouton bascule (Toggle) */
+    .toggle-switch {
+      position: relative;
+      width: 74px;
+      height: 38px;
+      background-color: var(--switch-off);
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background-color 0.25s ease;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+    }
 
-        .status-text {
-            font-weight: 500;
-            color: #e2e8f0;
-        }
+    .toggle-slider {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: 30px;
+      height: 30px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
 
-        /* ========================================================
-           LOGIQUE VA-ET-VIENT (XOR) EN CSS PUR :
-           Cas 1: A coché ET B non coché
-           Cas 2: A non coché ET B coché
-           ======================================================== */
-        #switchA:checked ~ #switchB:not(:checked) ~ .circuit .lamp,
-        #switchA:not(:checked) ~ #switchB:checked ~ .circuit .lamp {
-            background-color: var(--lamp-on);
-            box-shadow: 0 0 35px var(--lamp-glow), 0 0 70px var(--lamp-glow);
-            border-color: #fff;
-        }
+    /* Animation du toggle quand actif */
+    .circuit-box:has(#switchA:checked) .label-a .toggle-switch,
+    .circuit-box:has(#switchB:checked) .label-b .toggle-switch {
+      background-color: var(--switch-on);
+    }
 
-        /* Texte indicateur dynamique */
-        .status-text::after {
-            content: 'ÉTEINTE';
-            color: #e53e3e;
-            font-weight: bold;
-        }
+    .circuit-box:has(#switchA:checked) .label-a .toggle-slider,
+    .circuit-box:has(#switchB:checked) .label-b .toggle-slider {
+      transform: translateX(36px);
+    }
 
-        #switchA:checked ~ #switchB:not(:checked) ~ .circuit .status-text::after,
-        #switchA:not(:checked) ~ #switchB:checked ~ .circuit .status-text::after {
-            content: 'ALLUMÉE';
-            color: #48bb78;
-        }
+    /* ------------------------------------------------------------- */
+    /* LOGIQUE XOR DU VA-ET-VIENT :                                  */
+    /* (A actif ET B inactif) OU (B actif ET A inactif) => AMPOULE ON */
+    /* ------------------------------------------------------------- */
 
-        /* Tableau récapitulatif */
-        .truth-table {
-            margin-top: 40px;
-            border-collapse: collapse;
-            font-size: 0.9rem;
-            text-align: center;
-        }
+    /* Condition 1 : A est coché ET B n'est PAS coché */
+    .circuit-box:has(#switchA:checked):not(:has(#switchB:checked)) .bulb,
+    /* Condition 2 : B est coché ET A n'est PAS coché */
+    .circuit-box:has(#switchB:checked):not(:has(#switchA:checked)) .bulb {
+      background-color: var(--bulb-on);
+      box-shadow: 
+        0 0 30px 10px var(--glow-color),
+        0 0 70px 25px rgba(253, 224, 71, 0.25),
+        inset 0 -5px 15px rgba(255, 255, 255, 0.8);
+      border-color: #fff;
+    }
 
-        .truth-table th, .truth-table td {
-            border: 1px solid #4a5568;
-            padding: 8px 16px;
-        }
+    .circuit-box:has(#switchA:checked):not(:has(#switchB:checked)) .filament,
+    .circuit-box:has(#switchB:checked):not(:has(#switchA:checked)) .filament {
+      border-color: #ea580c;
+      box-shadow: 0 0 10px #ea580c;
+    }
 
-        .truth-table th {
-            background-color: #2d3748;
-        }
-    </style>
+    .circuit-box:has(#switchA:checked):not(:has(#switchB:checked)) .bulb-status::after,
+    .circuit-box:has(#switchB:checked):not(:has(#switchA:checked)) .bulb-status::after {
+      content: "Allumée";
+      color: #10b981;
+    }
+
+    /* État éteint par défaut (A=0,B=0 ou A=1,B=1) */
+    .bulb-status::after {
+      content: "Éteinte";
+      color: #ef4444;
+    }
+
+    /* Tableau de vérité explicatif */
+    .truth-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 0.82rem;
+      text-align: center;
+      background: #151824;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #232a3b;
+    }
+
+    .truth-table th, .truth-table td {
+      padding: 8px 12px;
+      border: 1px solid #232a3b;
+    }
+
+    .truth-table th {
+      background: #1e2436;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Mise en surbrillance de la ligne active dans le tableau */
+    .circuit-box:not(:has(#switchA:checked)):not(:has(#switchB:checked)) .row-00,
+    .circuit-box:has(#switchA:checked):not(:has(#switchB:checked)) .row-10,
+    .circuit-box:not(:has(#switchA:checked)):has(#switchB:checked)) .row-01,
+    .circuit-box:has(#switchA:checked):has(#switchB:checked) .row-11 {
+      background-color: rgba(56, 189, 248, 0.15);
+      font-weight: bold;
+      color: #38bdf8;
+    }
+  </style>
 </head>
 <body>
 
+  <div class="circuit-box">
+    <!-- Inputs gérant l'état logique -->
+    <input type="checkbox" id="switchA">
+    <input type="checkbox" id="switchB">
+
     <h1>Simulation Éclairage Va-et-Vient</h1>
-    <p class="subtitle">Cliquez sur les interrupteurs pour changer leur position</p>
+    <p class="subtitle">Logique booléenne exclusive (XOR) appliquée à un circuit à 2 interrupteurs</p>
 
-    <!-- Les entrées doivent être au même niveau pour que le CSS puisse les lier -->
-    <input type="checkbox" id="switchA" class="switch-input">
-    <input type="checkbox" id="switchB" class="switch-input">
-
-    <div class="circuit">
-        <!-- Interrupteur A -->
-        <label for="switchA" class="switch-box">
-            <span class="switch-title">Interrupteur A</span>
-            <div class="switch-lever"></div>
-        </label>
-
-        <!-- Ampoule L -->
-        <div class="lamp-container">
-            <div class="lamp"></div>
-            <span class="status-text">Lampe L : </span>
-        </div>
-
-        <!-- Interrupteur B -->
-        <label for="switchB" class="switch-box">
-            <span class="switch-title">Interrupteur B</span>
-            <div class="switch-lever"></div>
-        </label>
+    <!-- Ampoule L -->
+    <div class="bulb-section">
+      <div class="socket"></div>
+      <div class="bulb">
+        <div class="filament"></div>
+      </div>
+      <div class="bulb-status">Ampoule L : </div>
     </div>
 
-    <!-- Table de vérité pour référence -->
+    <!-- Interrupteurs A et B -->
+    <div class="switches-container">
+      <div class="switch-card">
+        <label for="switchA" class="label-a toggle-switch">
+          <div class="toggle-slider"></div>
+        </label>
+        <span class="switch-label-text">Switch A</span>
+      </div>
+
+      <div class="switch-card">
+        <label for="switchB" class="label-b toggle-switch">
+          <div class="toggle-slider"></div>
+        </label>
+        <span class="switch-label-text">Switch B</span>
+      </div>
+    </div>
+
+    <!-- Table de vérité dynamique -->
     <table class="truth-table">
-        <thead>
-            <tr>
-                <th>Switch A</th>
-                <th>Switch B</th>
-                <th>Lampe L</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr><td>0 (Haut)</td><td>0 (Haut)</td><td>Éteinte</td></tr>
-            <tr><td>1 (Bas)</td><td>0 (Haut)</td><td><strong>Allumée</strong></td></tr>
-            <tr><td>0 (Haut)</td><td>1 (Bas)</td><td><strong>Allumée</strong></td></tr>
-            <tr><td>1 (Bas)</td><td>1 (Bas)</td><td>Éteinte</td></tr>
-        </tbody>
+      <thead>
+        <tr>
+          <th>Switch A</th>
+          <th>Switch B</th>
+          <th>Ampoule L</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="row-00">
+          <td>0 (OFF)</td>
+          <td>0 (OFF)</td>
+          <td>0 (Éteinte)</td>
+        </tr>
+        <tr class="row-10">
+          <td>1 (ON)</td>
+          <td>0 (OFF)</td>
+          <td>1 (Allumée)</td>
+        </tr>
+        <tr class="row-01">
+          <td>0 (OFF)</td>
+          <td>1 (ON)</td>
+          <td>1 (Allumée)</td>
+        </tr>
+        <tr class="row-11">
+          <td>1 (ON)</td>
+          <td>1 (ON)</td>
+          <td>0 (Éteinte)</td>
+        </tr>
+      </tbody>
     </table>
+  </div>
 
 </body>
 </html>

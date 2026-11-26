@@ -1,5 +1,6 @@
 <h2>prompt</h2>
 Génère le code d’une page HTML avec du CSS pour simuler le fonctionnement d’un éclairage par va et vient électrique. Une ampoule L s’allume si on clique sur switch A pour l’activer et qu’on ne clique pas sur switch B ou si on clique sur switch B et qu’on ne clique pas sur switch A, sinon l’ampoule L reste éteinte.
+
 **Controlling Light Flow**
 
 I'm currently mapping out the logical flow for the va-et-vient circuit. My immediate focus is on how the activation of Switch A will initiate the sequence, determining the initial state of the light and the subsequent possibilities for Switch B's impact.
