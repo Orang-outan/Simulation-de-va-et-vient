@@ -1,6 +1,7 @@
 <h2>prompt</h2>
 Génère le code d’une page HTML avec du CSS pour simuler le fonctionnement d’un éclairage par va et vient électrique. Une ampoule L s’allume si on clique sur switch A pour l’activer et qu’on ne clique pas sur switch B ou si on clique sur switch B et qu’on ne clique pas sur switch A, sinon l’ampoule L reste éteinte.
 
+
 Caractéristiques de la simulation :
 Logique XOR intégrée :
 Switch A actif seul 
